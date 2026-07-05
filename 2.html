@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>本地视频播放器 - 编解码信息</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#121212;color:#fff;font-family:Arial;padding:20px}
+    .container{max-width:900px;margin:0 auto}
+    video{width:100%;background:#000;border-radius:8px;margin-bottom:15px}
+    input{padding:10px;background:#333;color:#fff;border:none;border-radius:6px;margin-bottom:15px}
+    
+    /* 信息面板 */
+    .info{background:#1e1e1e;padding:15px;border-radius:8px;margin-bottom:20px}
+    .info h3{margin-bottom:10px;color:#4f9eff}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    
+    /* 播放控制 */
+    .controls{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+    .controls button{
+      padding:8px 12px;
+      background:#333;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer
+    }
+    .controls button:hover{background:#444}
+    
+    /* 播放列表 */
+    .item{padding:10px;background:#222;margin:6px 0;border-radius:6px;cursor:pointer}
+    .item:hover{background:#333}
+  </style>
+</head>
+<body>
+<div class="container">
+  <input type="file" id="file" accept="video/*" multiple>
+
+  <!-- 倍速控制区 -->
+  <div class="controls">
+    <button onclick="setSpeed(0.5)">0.5x</button>
+    <button onclick="setSpeed(1)">1x 正常</button>
+    <button onclick="setSpeed(1.5)">1.5x</button>
+    <button onclick="setSpeed(2)">2x</button>
+  </div>
+
+  <!-- 编解码信息展示框 -->
+  <div class="info">
+    <h3>📀 视频编解码信息</h3>
+    <div class="info-grid" id="info">
+      请选择视频文件
+    </div>
+  </div>
+
+  <video id="v" controls></video>
+  <div id="list"></div>
+</div>
+
+<script>
+const v = document.getElementById('v');
+const file = document.getElementById('file');
+const list = document.getElementById('list');
+const info = document.getElementById('info');
+
+// 选择文件
+file.onchange = function(){
+  const files = Array.from(this.files);
+  list.innerHTML = '';
+  files.forEach((f, i) => {
+    let el = document.createElement('div');
+    el.className = 'item';
+    el.textContent = f.name;
+    el.onclick = () => playFile(f);
+    list.appendChild(el);
+  })
+}
+
+// 播放文件
+function playFile(file){
+  const url = URL.createObjectURL(file);
+  v.src = url;
+  v.play();
+
+  info.innerHTML = `
+    <div>文件名：${file.name}</div>
+    <div>大小：${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+    <div>类型：${file.type}</div>
+    <div>加载中...</div>
+  `;
+
+  // 加载完成显示信息
+  v.onloadedmetadata = function(){
+    const bitrate = (v.videoWidth * v.videoHeight * 30 * 0.15) / 1000000;
+    info.innerHTML = `
+      <div>文件名：${file.name}</div>
+      <div>大小：${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+      <div>分辨率：${v.videoWidth} × ${v.videoHeight}</div>
+      <div>时长：${v.duration.toFixed(1)} 秒</div>
+      <div>码率估算：${bitrate.toFixed(2)} Mbps</div>
+      <div>格式：${file.type}</div>
+    `;
+  }
+}
+
+// 倍速功能
+function setSpeed(s) {
+  v.playbackRate = s;
+}
+</script>
+</body>
+</html>
